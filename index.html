@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guitar Practice - Treino de Guitarra Inteligente</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="O Guitar Practice ajuda você a dominar riffs e solos de guitarra. Configure treinos em loop, ajuste velocidade, defina trechos específicos de backing tracks e registre seu progresso.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons (Icons library) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Effects -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+ 
+  <!-- Countdown Overlay -->
+  <div id="countdown-overlay" class="countdown-overlay hidden">
+    <div class="countdown-content">
+      <div id="countdown-number" class="countdown-number">3</div>
+      <div class="countdown-label">Prepare-se para tocar!</div>
+      <div id="countdown-song-info" class="countdown-song-info">...</div>
+    </div>
+  </div>
+ 
+  <!-- Mobile sidebar toggle button -->
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">
+    <i data-lucide="menu"></i>
+  </button>
+
+  <!-- Sidebar backdrop (click to close) -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i data-lucide="music-4" class="logo-icon"></i>
+          <div>
+            <h1>Guitar Practice</h1>
+            <span class="subtitle">Guitar Practice Studio</span>
+          </div>
+        </div>
+      </div>
+ 
+      <nav class="sidebar-nav">
+        <!-- Track Selection Section -->
+        <div class="section-group">
+          <h2 class="section-title"><i data-lucide="folder-open"></i> Minhas Músicas</h2>
+
+          <div class="track-list" id="track-list">
+            <!-- Backing tracks will be injected here -->
+          </div>
+        </div>
+
+        <!-- History/Stats Section -->
+        <div class="section-group">
+          <h2 class="section-title"><i data-lucide="award"></i> Histórico de Treino</h2>
+          <div class="history-list" id="history-list">
+            <p class="empty-state">Nenhum treino registrado hoje. Comece a praticar!</p>
+          </div>
+          <button id="clear-history-btn" class="btn btn-ghost btn-sm hidden">
+            <i data-lucide="trash-2"></i> Limpar histórico
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="current-track-info">
+          <div class="track-playing-badge" id="playing-badge">
+            <span class="pulse-dot"></span>
+            Carregando backing track...
+          </div>
+          <h2 id="current-track-title" class="track-title">Carregando...</h2>
+        </div>
+        
+        <div class="header-actions">
+          <button id="help-btn" class="btn btn-icon-text btn-outline">
+            <i data-lucide="help-circle"></i>
+            <span>Instruções</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Waveform Section -->
+      <section class="card waveform-card">
+        <div class="waveform-header">
+          <div class="time-display">
+            <span id="time-current" class="mono">00:00.0</span>
+            <span class="time-divider">/</span>
+            <span id="time-total" class="mono">00:00.0</span>
+          </div>
+          <div class="waveform-controls">
+            <div class="zoom-control">
+              <i data-lucide="zoom-out" class="icon-sm"></i>
+              <input type="range" id="zoom-slider" min="10" max="200" value="50" class="range-slider">
+              <i data-lucide="zoom-in" class="icon-sm"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- WaveSurfer Container -->
+        <div id="waveform-container">
+          <div id="waveform-loading" class="waveform-loading">
+            <div class="spinner"></div>
+            <span>Renderizando ondas sonoras...</span>
+          </div>
+          <div id="waveform"></div>
+          <div id="timeline"></div>
+        </div>
+
+        <div class="player-controls">
+          <button id="btn-backward" class="btn btn-icon btn-secondary" title="Voltar 5 segundos">
+            <i data-lucide="rewind"></i>
+          </button>
+          <button id="btn-play-pause" class="btn btn-icon btn-primary btn-lg" title="Play/Pause (Espaço)">
+            <i data-lucide="play" id="play-icon"></i>
+          </button>
+          <button id="btn-stop" class="btn btn-icon btn-secondary" title="Parar">
+            <i data-lucide="square"></i>
+          </button>
+          <button id="btn-forward" class="btn btn-icon btn-secondary" title="Avançar 5 segundos">
+            <i data-lucide="fast-forward"></i>
+          </button>
+          
+          <div class="volume-container">
+            <button id="btn-mute" class="btn btn-icon btn-ghost" title="Mutar">
+              <i data-lucide="volume-2" id="volume-icon"></i>
+            </button>
+            <input type="range" id="volume-slider" min="0" max="100" value="70" class="range-slider volume-slider">
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel Grid: Routine Settings & Notes -->
+      <div class="panel-grid">
+        <!-- Practice Routine Panel -->
+        <section class="card panel-card highlight-border">
+          <div class="card-header">
+            <i data-lucide="sliders-horizontal" class="header-icon text-accent"></i>
+            <h3>Configurar Rotina de Treino</h3>
+            <span class="save-status" id="routine-save-status">Salvo automaticamente</span>
+          </div>
+
+          <div class="card-body">
+            <!-- Loop Interval Inputs -->
+            <div class="setting-row">
+              <label class="setting-label">Trecho para Praticar (Loop)</label>
+              <div class="interval-inputs">
+                <div class="input-with-action">
+                  <span class="input-prefix">Início</span>
+                  <input type="text" id="loop-start-input" class="mono text-center" placeholder="00:00.0" value="00:00.0">
+                  <button id="btn-set-start" class="btn btn-action" title="Usar tempo atual">
+                    <i data-lucide="pin"></i>
+                  </button>
+                </div>
+                <div class="input-arrow"><i data-lucide="arrow-right"></i></div>
+                <div class="input-with-action">
+                  <span class="input-prefix">Fim</span>
+                  <input type="text" id="loop-end-input" class="mono text-center" placeholder="00:00.0" value="00:00.0">
+                  <button id="btn-set-end" class="btn btn-action" title="Usar tempo atual">
+                    <i data-lucide="pin"></i>
+                  </button>
+                </div>
+              </div>
+              <span class="input-hint">Dica: Você também pode arrastar a região colorida no gráfico acima!</span>
+            </div>
+
+            <!-- Playback Speed -->
+            <div class="setting-row">
+              <div class="setting-header-inline">
+                <label class="setting-label">Velocidade de Reprodução</label>
+                <span id="speed-display" class="badge-value">100%</span>
+              </div>
+              <div class="speed-slider-container">
+                <input type="range" id="speed-slider" min="50" max="150" value="100" class="range-slider speed-slider">
+                <div class="speed-ticks">
+                  <span>50%</span>
+                  <span>75%</span>
+                  <span>100%</span>
+                  <span>125%</span>
+                  <span>150%</span>
+                </div>
+              </div>
+              <div class="preset-buttons">
+                <button class="btn btn-sm btn-preset" data-speed="0.5">0.5x</button>
+                <button class="btn btn-sm btn-preset" data-speed="0.8">0.8x</button>
+                <button class="btn btn-sm btn-preset active" data-speed="1.0">1.0x</button>
+                <button class="btn btn-sm btn-preset" data-speed="1.2">1.2x</button>
+                <button class="btn btn-sm btn-preset" data-speed="1.5">1.5x</button>
+              </div>
+            </div>
+
+            <!-- Repetitions and Countdowns -->
+            <div class="form-grid">
+              <div class="setting-row">
+                <label class="setting-label" for="loops-input">Repetições (Voltas)</label>
+                <div class="input-spinner">
+                  <button id="btn-loops-dec" class="btn btn-spinner"><i data-lucide="minus"></i></button>
+                  <input type="number" id="loops-input" class="mono text-center" min="1" max="999" value="10">
+                  <button id="btn-loops-inc" class="btn btn-spinner"><i data-lucide="plus"></i></button>
+                </div>
+                <div class="infinite-toggle">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="loop-infinite-chk">
+                    <span class="checkmark"></span>
+                    Loop Infinito (∞)
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <label class="setting-label" for="countdown-select">Tempo de Preparação</label>
+                <select id="countdown-select" class="form-select">
+                  <option value="0">Sem contagem (Imediato)</option>
+                  <option value="3" selected>3 segundos</option>
+                  <option value="5">5 segundos</option>
+                  <option value="10">10 segundos</option>
+                </select>
+                <span class="input-hint">Contagem regressiva antes do primeiro loop.</span>
+              </div>
+            </div>
+
+            <!-- Pause Between Loops -->
+            <div class="setting-row">
+              <div class="setting-header-inline">
+                <label class="setting-label">Pausa entre Repetições</label>
+                <span id="pause-display" class="badge-value">0s</span>
+              </div>
+              <input type="range" id="pause-slider" min="0" max="10" value="0" step="0.5" class="range-slider">
+              <span class="input-hint">Tempo para respirar ou reorganizar as mãos a cada volta.</span>
+            </div>
+
+            <!-- Big Action Buttons -->
+            <div class="routine-actions">
+              <button id="btn-start-routine" class="btn btn-primary btn-giant">
+                <i data-lucide="play-circle"></i> Iniciar Rotina de Treino
+              </button>
+              <button id="btn-stop-routine" class="btn btn-danger btn-giant hidden">
+                <i data-lucide="octagon"></i> Parar Rotina (Sair)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Side Panel: Active Routine / Notes -->
+        <div class="right-panels">
+          <!-- Active Routine Progress Widget -->
+          <section id="routine-progress-card" class="card panel-card progress-card hidden animate-fade-in">
+            <div class="card-header border-glow">
+              <i data-lucide="flame" class="header-icon text-danger pulse"></i>
+              <h3>Rotina em Execução</h3>
+              <span class="badge badge-accent" id="routine-badge">Looping</span>
+            </div>
+            <div class="card-body routine-progress-body">
+              <div class="progress-circle-container">
+                <div class="progress-circle-bg">
+                  <div class="progress-circle" id="progress-circle"></div>
+                  <div class="progress-value">
+                    <div class="progress-digits"><span id="current-loop-num" class="mono">1</span><span class="slash">/</span><span id="total-loops-num" class="mono">10</span></div>
+                    <span class="progress-label">Repetições</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Active Status Info -->
+              <div class="status-grid">
+                <div class="status-item">
+                  <span class="status-label">Velocidade</span>
+                  <span class="status-value text-accent" id="status-speed">80%</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Intervalo</span>
+                  <span class="status-value" id="status-interval">00:00 - 00:47</span>
+                </div>
+              </div>
+
+              <!-- Nudge adjustment during practice -->
+              <div class="nudge-controls">
+                <span>Ajustar Velocidade no Treino:</span>
+                <div class="btn-group">
+                  <button id="btn-nudge-down" class="btn btn-sm btn-outline"><i data-lucide="chevron-down"></i> -5%</button>
+                  <button id="btn-nudge-up" class="btn btn-sm btn-outline"><i data-lucide="chevron-up"></i> +5%</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Presets Card -->
+          <section class="card panel-card presets-card">
+            <div class="card-header">
+              <i data-lucide="save" class="header-icon text-accent"></i>
+              <h3>Presets de Treino</h3>
+            </div>
+            <div class="card-body">
+              <div class="preset-save-container">
+                <input type="text" id="preset-name-input" placeholder="Nome do preset (ex: Riff Rápido)" class="form-input text-input">
+                <button id="btn-save-preset" class="btn btn-primary btn-save">
+                  <i data-lucide="save"></i> Salvar
+                </button>
+              </div>
+              <div class="presets-list" id="presets-list">
+                <p class="empty-state">Nenhum preset salvo para esta música.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Notes Editor Card -->
+          <section class="card panel-card notes-card">
+            <div class="card-header">
+              <i data-lucide="edit-3" class="header-icon"></i>
+              <h3>Cifras & Anotações da Música</h3>
+              <span class="save-status" id="save-status">Salvo automaticamente</span>
+            </div>
+            <div class="card-body">
+              <textarea id="notes-textarea" class="notes-textarea" placeholder="Cole aqui a cifra, tabs, anotações de escalas ou detalhes sobre o andamento desta música..."></textarea>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i data-lucide="guitar"></i> Como funciona o Guitar Practice?</h3>
+        <button id="close-modal" class="btn btn-icon btn-ghost"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <ol class="help-list">
+          <li>
+            <strong>Selecione uma Backing Track:</strong> 
+            Escolha uma das backing tracks pré-carregadas disponíveis na lista no menu lateral.
+          </li>
+          <li>
+            <strong>Defina a região do Loop:</strong>
+            Arraste as alças da região amarela na onda sonora acima, ou configure os tempos exatos nos campos de <strong>Início</strong> e <strong>Fim</strong>. Você também pode tocar a música e apertar o botão <i data-lucide="pin" class="inline-icon"></i> para marcar a posição atual como início ou fim do loop.
+          </li>
+          <li>
+            <strong>Configure o treino:</strong>
+            Defina o número de repetições desejadas (ex: 10 vezes), a velocidade de reprodução (ex: 80% para começar devagar e ir acelerando) e se deseja um tempo de preparação (countdown) para dar tempo de posicionar as mãos.
+          </li>
+          <li>
+            <strong>Pratique:</strong>
+            Aperte o botão <strong>Iniciar Rotina de Treino</strong>. O app vai apitar os segundos de contagem e iniciar o loop automaticamente. A cada ciclo completo, ele reinicia e conta a repetição!
+          </li>
+        </ol>
+        
+        <div class="shortcuts-section">
+          <h4>Atalhos do Teclado:</h4>
+          <ul class="shortcuts-list">
+            <li><kbd>Espaço</kbd> Play / Pause da música</li>
+            <li><kbd>Esc</kbd> Para parar a rotina de treino ativa</li>
+            <li><kbd>S</kbd> Marca o tempo atual como INÍCIO do loop</li>
+            <li><kbd>E</kbd> Marca o tempo atual como FIM do loop</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-close-help" class="btn btn-primary">Bons treinos!</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Wavesurfer Scripts and plugins -->
+  <script src="https://unpkg.com/wavesurfer.js@7"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
+  
+  <!-- App Logic script -->
+  <script src="app.js"></script>
+
+  <!-- Responsive sidebar toggle -->
+  <script>
+    (function () {
+      const toggle = document.getElementById('sidebar-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        backdrop.classList.add('visible');
+        toggle.setAttribute('aria-expanded', 'true');
+        // swap icon
+        toggle.querySelector('i').setAttribute('data-lucide', 'x');
+        lucide.createIcons();
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('visible');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.querySelector('i').setAttribute('data-lucide', 'menu');
+        lucide.createIcons();
+      }
+
+      toggle.addEventListener('click', function () {
+        if (sidebar.classList.contains('open')) {
+          closeSidebar();
+        } else {
+          openSidebar();
+        }
+      });
+
+      backdrop.addEventListener('click', closeSidebar);
+
+      // Close sidebar when a track is selected (on mobile)
+      document.getElementById('track-list').addEventListener('click', function () {
+        if (window.innerWidth <= 1100) closeSidebar();
+      });
+
+      // Close on Escape
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+          closeSidebar();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
