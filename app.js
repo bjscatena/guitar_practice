@@ -1295,6 +1295,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Trigger Lucide Icons replace
   lucide.createIcons();
   
-  // Initialise Audio Context silently on first user interaction
-  document.addEventListener('click', () => synth.init(), { once: true });
+  // Initialise Audio Context silently on first user interaction (click or touch)
+  const initAudioOnce = () => synth.init();
+  document.addEventListener('click', initAudioOnce, { once: true });
+  document.addEventListener('touchstart', initAudioOnce, { once: true });
 });

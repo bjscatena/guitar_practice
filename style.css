@@ -120,6 +120,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   backdrop-filter: blur(12px);
   transition: all 0.2s;
 }
@@ -224,6 +225,7 @@ body {
   padding: 20px 16px;
   text-align: center;
   cursor: pointer;
+  touch-action: manipulation;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: rgba(30, 41, 59, 0.2);
@@ -290,6 +292,7 @@ body {
   background: rgba(30, 41, 59, 0.3);
   border: 1px solid var(--border-color);
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
@@ -754,6 +757,7 @@ body {
   color: var(--text-secondary);
   padding: 0 12px;
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s;
 }
 
@@ -828,6 +832,7 @@ body {
   padding: 6px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s;
   font-size: 0.75rem;
 }
@@ -890,6 +895,7 @@ body {
   color: var(--text-secondary);
   width: 42px;
   cursor: pointer;
+  touch-action: manipulation;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1167,6 +1173,7 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   user-select: none;
