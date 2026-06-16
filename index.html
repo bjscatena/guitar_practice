@@ -177,13 +177,23 @@
                 <span id="speed-display" class="badge-value">100%</span>
               </div>
               <div class="speed-slider-container">
-                <input type="range" id="speed-slider" min="50" max="150" value="100" class="range-slider speed-slider">
-                <div class="speed-ticks">
-                  <span>50%</span>
-                  <span>75%</span>
-                  <span>100%</span>
-                  <span>125%</span>
-                  <span>150%</span>
+                <div class="speed-adjuster-wrapper">
+                  <button id="btn-speed-dec" class="btn-speed-adjust" title="Diminuir velocidade em 5%">
+                    <i data-lucide="minus"></i>
+                  </button>
+                  <div class="speed-slider-inner">
+                    <input type="range" id="speed-slider" min="50" max="150" value="100" class="range-slider speed-slider">
+                    <div class="speed-ticks">
+                      <span>50%</span>
+                      <span>75%</span>
+                      <span>100%</span>
+                      <span>125%</span>
+                      <span>150%</span>
+                    </div>
+                  </div>
+                  <button id="btn-speed-inc" class="btn-speed-adjust" title="Aumentar velocidade em 5%">
+                    <i data-lucide="plus"></i>
+                  </button>
                 </div>
               </div>
               <div class="preset-buttons">

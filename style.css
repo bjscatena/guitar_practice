@@ -777,6 +777,50 @@ body {
   padding-bottom: 4px;
 }
 
+.speed-adjuster-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.speed-slider-inner {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-speed-adjust {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.btn-speed-adjust:hover {
+  background: rgba(30, 41, 59, 0.8);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-speed-adjust:active {
+  transform: scale(0.92);
+}
+
+.btn-speed-adjust i {
+  width: 16px;
+  height: 16px;
+}
+
 .speed-ticks {
   display: flex;
   justify-content: space-between;

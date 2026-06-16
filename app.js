@@ -84,6 +84,8 @@ const statusSpeed = document.getElementById('status-speed');
 const statusInterval = document.getElementById('status-interval');
 const btnNudgeDown = document.getElementById('btn-nudge-down');
 const btnNudgeUp = document.getElementById('btn-nudge-up');
+const btnSpeedDec = document.getElementById('btn-speed-dec');
+const btnSpeedInc = document.getElementById('btn-speed-inc');
 
 const routineSaveStatus = document.getElementById('routine-save-status');
 const presetNameInput = document.getElementById('preset-name-input');
@@ -335,6 +337,18 @@ function updatePlaybackSpeed() {
   
   if (isPlayingRoutine) {
     statusSpeed.textContent = `${speedSlider.value}%`;
+  }
+  
+  // Update preset buttons active state based on current speed
+  if (presetButtons) {
+    presetButtons.forEach(btn => {
+      const btnSpeed = parseFloat(btn.getAttribute('data-speed'));
+      if (Math.round(btnSpeed * 100) === parseInt(speedSlider.value)) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 }
 
@@ -649,6 +663,16 @@ function savePresets(presets) {
   localStorage.setItem(`guitar_practice_presets_${track.id}`, JSON.stringify(presets));
 }
 
+function formatPracticeDuration(seconds) {
+  if (seconds === Infinity || isNaN(seconds)) return "∞";
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+}
+
 function renderPresets() {
   const presets = getPresets();
   const listContainer = document.getElementById('presets-list');
@@ -669,6 +693,20 @@ function renderPresets() {
     const speedText = `${preset.speed}%`;
     const timeText = `${formatTime(preset.loopStart)} - ${formatTime(preset.loopEnd)}`;
     
+    // Calculate estimated total practice time
+    let practiceDurationText = "";
+    if (isInfinite) {
+      practiceDurationText = "∞";
+    } else {
+      const oneLoopRaw = Math.max(0, preset.loopEnd - preset.loopStart);
+      const speedFactor = (preset.speed || 100) / 100;
+      const oneLoopAdjusted = oneLoopRaw / speedFactor;
+      const loops = preset.loops || 10;
+      const pause = preset.pause !== undefined ? parseFloat(preset.pause) : 0;
+      const totalSecs = Math.round((oneLoopAdjusted * loops) + (pause * Math.max(0, loops - 1)));
+      practiceDurationText = formatPracticeDuration(totalSecs);
+    }
+    
     item.innerHTML = `
       <div class="preset-info">
         <span class="preset-name" title="${preset.name}">${preset.name}</span>
@@ -676,6 +714,7 @@ function renderPresets() {
           <span class="preset-meta-item"><i data-lucide="repeat" class="inline-icon" style="width:10px; height:10px;"></i> ${loopsText}</span>
           <span class="preset-meta-item"><i data-lucide="gauge" class="inline-icon" style="width:10px; height:10px;"></i> ${speedText}</span>
           <span class="preset-meta-item"><i data-lucide="clock" class="inline-icon" style="width:10px; height:10px;"></i> ${timeText}</span>
+          <span class="preset-meta-item" title="Tempo total de treino estimado"><i data-lucide="timer" class="inline-icon" style="width:10px; height:10px;"></i> ${practiceDurationText}</span>
         </div>
       </div>
       <button class="btn-delete-preset" title="Excluir preset" data-id="${preset.id}">
@@ -719,14 +758,7 @@ function loadPreset(preset) {
   speedDisplay.textContent = `${preset.speed}%`;
   updatePlaybackSpeed();
   
-  presetButtons.forEach(btn => {
-    const btnSpeed = parseFloat(btn.getAttribute('data-speed'));
-    if (Math.round(btnSpeed * 100) === parseInt(speedSlider.value)) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
+  // presetButtons active states are automatically updated in updatePlaybackSpeed()
   
   loopsInput.value = preset.loops;
   loopInfiniteChk.checked = !!preset.infinite;
@@ -847,14 +879,7 @@ function loadRoutineSettings() {
       speedDisplay.textContent = `${speedSlider.value}%`;
       updatePlaybackSpeed();
       
-      presetButtons.forEach(btn => {
-        const btnSpeed = parseFloat(btn.getAttribute('data-speed'));
-        if (Math.round(btnSpeed * 100) === parseInt(speedSlider.value)) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
+      // presetButtons active states are automatically updated in updatePlaybackSpeed()
       
       loopsInput.value = settings.loops || 10;
       loopInfiniteChk.checked = !!settings.infinite;
@@ -892,10 +917,7 @@ function loadRoutineSettings() {
     speedSlider.value = 100;
     speedDisplay.textContent = "100%";
     updatePlaybackSpeed();
-    presetButtons.forEach(btn => {
-      if (btn.getAttribute('data-speed') === '1.0') btn.classList.add('active');
-      else btn.classList.remove('active');
-    });
+    // presetButtons active states are automatically updated in updatePlaybackSpeed()
     
     loopsInput.value = 10;
     loopInfiniteChk.checked = false;
@@ -1025,11 +1047,28 @@ speedSlider.addEventListener('input', () => {
   saveRoutineSettings();
 });
 
+if (btnSpeedDec) {
+  btnSpeedDec.addEventListener('click', () => {
+    let val = parseInt(speedSlider.value) - 5;
+    if (val < 50) val = 50;
+    speedSlider.value = val;
+    updatePlaybackSpeed();
+    saveRoutineSettings();
+  });
+}
+
+if (btnSpeedInc) {
+  btnSpeedInc.addEventListener('click', () => {
+    let val = parseInt(speedSlider.value) + 5;
+    if (val > 150) val = 150;
+    speedSlider.value = val;
+    updatePlaybackSpeed();
+    saveRoutineSettings();
+  });
+}
+
 presetButtons.forEach(btn => {
   btn.addEventListener('click', () => {
-    presetButtons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    
     const speed = parseFloat(btn.getAttribute('data-speed'));
     speedSlider.value = Math.round(speed * 100);
     updatePlaybackSpeed();
@@ -1124,9 +1163,6 @@ btnNudgeDown.addEventListener('click', () => {
   if (val < 50) val = 50;
   speedSlider.value = val;
   updatePlaybackSpeed();
-  
-  // Update presets visual
-  presetButtons.forEach(b => b.classList.remove('active'));
   saveRoutineSettings();
 });
 
@@ -1135,9 +1171,6 @@ btnNudgeUp.addEventListener('click', () => {
   if (val > 150) val = 150;
   speedSlider.value = val;
   updatePlaybackSpeed();
-  
-  // Update presets visual
-  presetButtons.forEach(b => b.classList.remove('active'));
   saveRoutineSettings();
 });
 
