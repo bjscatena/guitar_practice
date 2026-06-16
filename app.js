@@ -14,8 +14,8 @@ const DEFAULT_TRACKS = [
     id: "smoke-on-the-water"
   },
   {
-    name: "Eye of the tiger.mp3",
-    url: "tracks/Eye of the tiger.mp3.mpeg",
+    name: "Eye of the tiger",
+    url: "tracks/Eye of the tiger.mpeg",
     id: "eye-of-the-tiger-alt"
   }
 ];
@@ -45,7 +45,6 @@ const currentTrackTitle = document.getElementById('current-track-title');
 const playingBadge = document.getElementById('playing-badge');
 
 const btnPlayPause = document.getElementById('btn-play-pause');
-const playIcon = document.getElementById('play-icon');
 const btnStop = document.getElementById('btn-stop');
 const btnBackward = document.getElementById('btn-backward');
 const btnForward = document.getElementById('btn-forward');
@@ -86,8 +85,6 @@ const statusInterval = document.getElementById('status-interval');
 const btnNudgeDown = document.getElementById('btn-nudge-down');
 const btnNudgeUp = document.getElementById('btn-nudge-up');
 
-const notesTextarea = document.getElementById('notes-textarea');
-const saveStatus = document.getElementById('save-status');
 const routineSaveStatus = document.getElementById('routine-save-status');
 const presetNameInput = document.getElementById('preset-name-input');
 const btnSavePreset = document.getElementById('btn-save-preset');
@@ -101,8 +98,6 @@ const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownNumber = document.getElementById('countdown-number');
 const countdownSongInfo = document.getElementById('countdown-song-info');
 
-const historyList = document.getElementById('history-list');
-const clearHistoryBtn = document.getElementById('clear-history-btn');
 
 // ----------------------------------------------------
 // Web Audio Synthesizer Class (Ticks & Completion)
@@ -176,14 +171,13 @@ PracticeSynth.prototype.playSuccess = function() {
 // Formatting & Helpers
 // ----------------------------------------------------
 function formatTime(seconds) {
-  if (isNaN(seconds) || seconds === null) return "00:00.0";
+  if (isNaN(seconds) || seconds === null) return "00:00";
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  const tenths = Math.floor((seconds % 1) * 10);
   
   const minStr = String(mins).padStart(2, '0');
   const secStr = String(secs).padStart(2, '0');
-  return `${minStr}:${secStr}.${tenths}`;
+  return `${minStr}:${secStr}`;
 }
 
 function parseTime(timeStr) {
@@ -259,8 +253,7 @@ function initWavesurfer(audioUrl) {
     // Apply current settings
     ws.setVolume(parseFloat(volumeSlider.value) / 100);
     
-    // Auto-load saved notes
-    loadNotes();
+
 
     // Auto-load saved presets
     renderPresets();
@@ -287,13 +280,13 @@ function initWavesurfer(audioUrl) {
   });
 
   ws.on('play', () => {
-    playIcon.setAttribute('data-lucide', 'pause');
+    btnPlayPause.innerHTML = '<i data-lucide="pause" id="play-icon"></i>';
     lucide.createIcons();
     playingBadge.innerHTML = '<span class="pulse-dot"></span> Reproduzindo';
   });
 
   ws.on('pause', () => {
-    playIcon.setAttribute('data-lucide', 'play');
+    btnPlayPause.innerHTML = '<i data-lucide="play" id="play-icon"></i>';
     lucide.createIcons();
     playingBadge.innerHTML = 'Pausado';
   });
@@ -307,7 +300,7 @@ function initWavesurfer(audioUrl) {
       
       // If loop progress display is open, update intervals
       if (isPlayingRoutine) {
-        statusInterval.textContent = `${formatTime(loopStart).split('.')[0]} - ${formatTime(loopEnd).split('.')[0]}`;
+        statusInterval.textContent = `${formatTime(loopStart)} - ${formatTime(loopEnd)}`;
       }
       saveRoutineSettings();
     }
@@ -384,12 +377,15 @@ function selectTrack(index) {
   }
   
   currentTrackIndex = index;
+  localStorage.setItem('guitar_practice_last_track_index', index);
   const track = trackLibrary[currentTrackIndex];
   
   currentTrackTitle.textContent = track.name;
   initWavesurfer(track.url);
   renderTrackList();
 }
+
+
 
 // ----------------------------------------------------
 // Routine practice core loop
@@ -561,7 +557,7 @@ function updateRoutineUI() {
   totalLoopsNum.textContent = loopInfinite ? "∞" : maxLoops;
   
   statusSpeed.textContent = `${speedSlider.value}%`;
-  statusInterval.textContent = `${formatTime(loopStart).split('.')[0]} - ${formatTime(loopEnd).split('.')[0]}`;
+  statusInterval.textContent = `${formatTime(loopStart)} - ${formatTime(loopEnd)}`;
   
   // Progress Circle visual update
   const pct = loopInfinite ? 0 : ((currentLoopCount - 1) / maxLoops) * 100;
@@ -589,7 +585,6 @@ function updateActiveRoutineProgress(currentTime) {
 
 function completeRoutine() {
   synth.playSuccess();
-  savePracticeSession();
   stopRoutine(true);
 }
 
@@ -672,7 +667,7 @@ function renderPresets() {
     const isInfinite = preset.infinite;
     const loopsText = isInfinite ? "∞" : `${preset.loops}x`;
     const speedText = `${preset.speed}%`;
-    const timeText = `${formatTime(preset.loopStart).split('.')[0]} - ${formatTime(preset.loopEnd).split('.')[0]}`;
+    const timeText = `${formatTime(preset.loopStart)} - ${formatTime(preset.loopEnd)}`;
     
     item.innerHTML = `
       <div class="preset-info">
@@ -799,31 +794,8 @@ if (btnSavePreset) {
 }
 
 // ----------------------------------------------------
-// LocalStorage (Notes, History)
+// LocalStorage (Routine Settings)
 // ----------------------------------------------------
-function getTrackNotesKey() {
-  const track = trackLibrary[currentTrackIndex];
-  return `guitar_practice_notes_${track.id}`;
-}
-
-function loadNotes() {
-  const key = getTrackNotesKey();
-  const saved = localStorage.getItem(key);
-  notesTextarea.value = saved || "";
-  saveStatus.textContent = "Anotações carregadas";
-}
-
-let notesTimeout = null;
-notesTextarea.addEventListener('input', () => {
-  saveStatus.textContent = "Digitando...";
-  
-  if (notesTimeout) clearTimeout(notesTimeout);
-  notesTimeout = setTimeout(() => {
-    const key = getTrackNotesKey();
-    localStorage.setItem(key, notesTextarea.value);
-    saveStatus.textContent = "Salvo automaticamente";
-  }, 1000);
-});
 
 // Routine Settings Auto-save & Auto-load
 let routineSaveTimeout = null;
@@ -944,71 +916,7 @@ function loadRoutineSettings() {
   }
 }
 
-// Practice History Management
-function savePracticeSession() {
-  const track = trackLibrary[currentTrackIndex];
-  const history = getHistory();
-  
-  const newEntry = {
-    songName: track.name,
-    loops: loopInfinite ? "Infinitas" : maxLoops,
-    speed: speedSlider.value,
-    timestamp: Date.now()
-  };
-  
-  history.unshift(newEntry);
-  // Keep last 30 entries
-  if (history.length > 30) history.pop();
-  
-  localStorage.setItem('guitar_practice_history', JSON.stringify(history));
-  renderHistory();
-}
 
-function getHistory() {
-  const raw = localStorage.getItem('guitar_practice_history');
-  return raw ? JSON.parse(raw) : [];
-}
-
-function renderHistory() {
-  const history = getHistory();
-  if (history.length === 0) {
-    historyList.innerHTML = `<p class="empty-state">Nenhum treino registrado hoje. Comece a praticar!</p>`;
-    clearHistoryBtn.classList.add('hidden');
-    return;
-  }
-  
-  clearHistoryBtn.classList.remove('hidden');
-  historyList.innerHTML = '';
-  
-  history.forEach(entry => {
-    const date = new Date(entry.timestamp);
-    const dateStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-    
-    const card = document.createElement('div');
-    card.className = 'history-item';
-    card.innerHTML = `
-      <div class="history-header">
-        <span class="track-item-name" style="width:140px; font-weight:600;">${entry.songName}</span>
-        <span class="history-date">${dateStr}</span>
-      </div>
-      <div class="history-meta">
-        <span><i data-lucide="repeat" class="inline-icon" style="width:10px;"></i> ${entry.loops}x</span>
-        <span><i data-lucide="gauge" class="inline-icon" style="width:10px;"></i> ${entry.speed}%</span>
-      </div>
-    `;
-    historyList.appendChild(card);
-  });
-  
-  lucide.createIcons();
-}
-
-clearHistoryBtn.addEventListener('click', () => {
-  if (confirm("Tem certeza que deseja apagar todo seu histórico de treino?")) {
-    localStorage.removeItem('guitar_practice_history');
-    renderHistory();
-    showToast("Histórico limpo", "info");
-  }
-});
 
 // ----------------------------------------------------
 // Event Listeners (Audio control, speeds, loops)
@@ -1289,8 +1197,11 @@ window.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   // Load playlist and select first track
   renderTrackList();
-  renderHistory();
-  selectTrack(0);
+  
+  const lastIndex = localStorage.getItem('guitar_practice_last_track_index');
+  const initialIndex = lastIndex !== null ? parseInt(lastIndex, 10) : 0;
+  const safeIndex = (initialIndex >= 0 && initialIndex < trackLibrary.length) ? initialIndex : 0;
+  selectTrack(safeIndex);
   
   // Trigger Lucide Icons replace
   lucide.createIcons();

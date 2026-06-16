@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guitar Practice - Treino de Guitarra Inteligente</title>
+  <title>Guitar Practice</title>
   
   <!-- SEO Meta Tags -->
   <meta name="description" content="O Guitar Practice ajuda você a dominar riffs e solos de guitarra. Configure treinos em loop, ajuste velocidade, defina trechos específicos de backing tracks e registre seu progresso.">
@@ -49,7 +49,6 @@
           <i data-lucide="music-4" class="logo-icon"></i>
           <div>
             <h1>Guitar Practice</h1>
-            <span class="subtitle">Guitar Practice Studio</span>
           </div>
         </div>
       </div>
@@ -64,16 +63,6 @@
           </div>
         </div>
 
-        <!-- History/Stats Section -->
-        <div class="section-group">
-          <h2 class="section-title"><i data-lucide="award"></i> Histórico de Treino</h2>
-          <div class="history-list" id="history-list">
-            <p class="empty-state">Nenhum treino registrado hoje. Comece a praticar!</p>
-          </div>
-          <button id="clear-history-btn" class="btn btn-ghost btn-sm hidden">
-            <i data-lucide="trash-2"></i> Limpar histórico
-          </button>
-        </div>
       </nav>
     </aside>
 
@@ -101,9 +90,9 @@
       <section class="card waveform-card">
         <div class="waveform-header">
           <div class="time-display">
-            <span id="time-current" class="mono">00:00.0</span>
+            <span id="time-current" class="mono">00:00</span>
             <span class="time-divider">/</span>
-            <span id="time-total" class="mono">00:00.0</span>
+            <span id="time-total" class="mono">00:00</span>
           </div>
           <div class="waveform-controls">
             <div class="zoom-control">
@@ -164,7 +153,7 @@
               <div class="interval-inputs">
                 <div class="input-with-action">
                   <span class="input-prefix">Início</span>
-                  <input type="text" id="loop-start-input" class="mono text-center" placeholder="00:00.0" value="00:00.0">
+                  <input type="text" id="loop-start-input" class="mono text-center" placeholder="00:00" value="00:00">
                   <button id="btn-set-start" class="btn btn-action" title="Usar tempo atual">
                     <i data-lucide="pin"></i>
                   </button>
@@ -172,7 +161,7 @@
                 <div class="input-arrow"><i data-lucide="arrow-right"></i></div>
                 <div class="input-with-action">
                   <span class="input-prefix">Fim</span>
-                  <input type="text" id="loop-end-input" class="mono text-center" placeholder="00:00.0" value="00:00.0">
+                  <input type="text" id="loop-end-input" class="mono text-center" placeholder="00:00" value="00:00">
                   <button id="btn-set-end" class="btn btn-action" title="Usar tempo atual">
                     <i data-lucide="pin"></i>
                   </button>
@@ -320,17 +309,7 @@
             </div>
           </section>
 
-          <!-- Notes Editor Card -->
-          <section class="card panel-card notes-card">
-            <div class="card-header">
-              <i data-lucide="edit-3" class="header-icon"></i>
-              <h3>Cifras & Anotações da Música</h3>
-              <span class="save-status" id="save-status">Salvo automaticamente</span>
-            </div>
-            <div class="card-body">
-              <textarea id="notes-textarea" class="notes-textarea" placeholder="Cole aqui a cifra, tabs, anotações de escalas ou detalhes sobre o andamento desta música..."></textarea>
-            </div>
-          </section>
+
         </div>
       </div>
     </main>

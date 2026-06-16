@@ -10,8 +10,6 @@ Aplicativo web para praticar riffs, solos e músicas no violão/guitarra. Isole 
 - 🔄 Repetições configuráveis ou loop infinito
 - ⏳ Contagem regressiva antes do treino
 - ⏸️ Pausa entre loops
-- 📝 Anotações salvas automaticamente por música
-- 🏆 Histórico de prática do dia
 
 ## 🌐 Acesse
 
