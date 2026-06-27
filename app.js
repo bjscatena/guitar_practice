@@ -789,49 +789,22 @@ function loadLibraryFromStorage() {
   if (raw) {
     try {
       trackLibrary = JSON.parse(raw);
+      // Filtrar músicas padrão herdadas de versões anteriores
+      const originalLength = trackLibrary.length;
+      trackLibrary = trackLibrary.filter(track => 
+        track.id !== "eye-of-the-tiger" && 
+        track.id !== "smoke-on-the-water" && 
+        track.id !== "eye-of-the-tiger-alt"
+      );
+      if (trackLibrary.length !== originalLength) {
+        saveLibraryToStorage();
+      }
     } catch (e) {
       console.error("Erro ao carregar biblioteca:", e);
       trackLibrary = [];
     }
   } else {
-    migrateLegacyPresets();
-  }
-}
-
-function migrateLegacyPresets() {
-  trackLibrary = [];
-  const legacyIds = [
-    { id: "eye-of-the-tiger", name: "Survivor - Eye of the tiger - Guitar Backing track", artist: "Survivor" },
-    { id: "smoke-on-the-water", name: "Smoke On The Water - Em (100% com Click)", artist: "Deep Purple" },
-    { id: "eye-of-the-tiger-alt", name: "Eye of the tiger", artist: "Survivor" }
-  ];
-  
-  let hasLegacyData = false;
-  legacyIds.forEach(info => {
-    const rawPresets = localStorage.getItem(`guitar_practice_presets_${info.id}`);
-    const rawRoutine = localStorage.getItem(`guitar_practice_routine_${info.id}`);
-    
-    if (rawPresets || rawRoutine) {
-      hasLegacyData = true;
-      let routineSettings = null;
-      if (rawRoutine) {
-        try {
-          routineSettings = JSON.parse(rawRoutine);
-        } catch (e) {}
-      }
-      const song = {
-        id: info.id,
-        name: info.name,
-        artist: info.artist,
-        presets: rawPresets ? JSON.parse(rawPresets) : [],
-        routineSettings: routineSettings
-      };
-      trackLibrary.push(song);
-    }
-  });
-  
-  if (hasLegacyData) {
-    saveLibraryToStorage();
+    trackLibrary = [];
   }
 }
 
