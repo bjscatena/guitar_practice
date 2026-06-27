@@ -1925,3 +1925,156 @@ kbd {
   background: rgba(239, 68, 68, 0.1);
 }
 
+/* --- Novas Classes de Estilo Antigravity --- */
+
+.hidden {
+  display: none !important;
+}
+
+/* Formulário de Cadastro de Música na Sidebar */
+.add-song-container {
+  margin-bottom: 12px;
+}
+
+.btn-full-width {
+  width: 100%;
+  justify-content: center;
+}
+
+.form-add-song {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.form-add-song .form-input {
+  width: 100%;
+  background: rgba(10, 15, 30, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.form-add-song .form-input:focus {
+  border-color: var(--accent);
+  background: rgba(10, 15, 30, 0.6);
+}
+
+.form-add-song .form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.form-add-song .btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+/* Grupo de Backup */
+.backup-section-group {
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+.backup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Card de Seleção/Upload de Áudio Local */
+.audio-upload-card {
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(245, 158, 11, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(30, 41, 59, 0.25);
+  margin-bottom: 24px;
+}
+
+.audio-upload-card:hover, .audio-upload-card.dragover {
+  border-color: var(--accent);
+  background: rgba(245, 158, 11, 0.05);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.08);
+}
+
+.audio-upload-content {
+  width: 100%;
+  text-align: center;
+}
+
+.audio-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 30px;
+}
+
+.upload-icon-lg {
+  width: 48px;
+  height: 48px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.audio-upload-card:hover .upload-icon-lg {
+  color: var(--accent);
+  transform: translateY(-4px);
+}
+
+.audio-upload-dropzone h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.audio-upload-dropzone p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 480px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.track-item-artist {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.track-item-delete {
+  color: var(--text-muted);
+  opacity: 0;
+  transition: all 0.2s;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.track-item:hover .track-item-delete {
+  opacity: 1;
+}
+
+.track-item-delete:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}

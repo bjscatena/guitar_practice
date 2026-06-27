@@ -1,33 +1,18 @@
 // Guitar Practice - Guitar Routine Practice Studio
 // Pure JavaScript logic leveraging Wavesurfer.js v7
 
-// Default preloaded backing tracks
-const DEFAULT_TRACKS = [
-  {
-    name: "Survivor - Eye of the tiger - Guitar Backing track",
-    url: "tracks/Survivor - Eye of the tiger - Guitar Backing track.mp3",
-    id: "eye-of-the-tiger"
-  },
-  {
-    name: "Smoke On The Water - Em (100% com Click)",
-    url: "tracks/Smoke On The Water - Em (100% com Click).wav",
-    id: "smoke-on-the-water"
-  },
-  {
-    name: "Eye of the tiger",
-    url: "tracks/Eye of the tiger.mpeg",
-    id: "eye-of-the-tiger-alt"
-  }
-];
+// Library lida do localStorage
+let trackLibrary = [];
+let currentTrackIndex = -1;
+
+// Guardar Blob URLs temporários dos áudios por música durante a sessão
+let sessionAudioUrls = {};
 
 // App State
 let ws = null;
 let wsRegions = null;
 let wsTimeline = null;
 let activeRegion = null;
-
-let trackLibrary = [...DEFAULT_TRACKS];
-let currentTrackIndex = 0;
 
 let loopStart = 0;
 let loopEnd = 0;
@@ -60,6 +45,7 @@ const loopStartInput = document.getElementById('loop-start-input');
 const loopEndInput = document.getElementById('loop-end-input');
 const btnSetStart = document.getElementById('btn-set-start');
 const btnSetEnd = document.getElementById('btn-set-end');
+const btnSetEndToSongEnd = document.getElementById('btn-set-end-to-song-end');
 
 const speedSlider = document.getElementById('speed-slider');
 const speedDisplay = document.getElementById('speed-display');
@@ -99,6 +85,26 @@ const btnCloseHelp = document.getElementById('btn-close-help');
 const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownNumber = document.getElementById('countdown-number');
 const countdownSongInfo = document.getElementById('countdown-song-info');
+
+// DOM Elements específicos adicionados para cadastro e upload local
+const btnShowAddSong = document.getElementById('btn-show-add-song');
+const formAddSong = document.getElementById('form-add-song');
+const addSongTitle = document.getElementById('add-song-title');
+const btnCancelAddSong = document.getElementById('btn-cancel-add-song');
+
+const btnExportBackup = document.getElementById('btn-export-backup');
+const btnTriggerImport = document.getElementById('btn-trigger-import');
+const importBackupFile = document.getElementById('import-backup-file');
+
+const audioUploadSection = document.getElementById('audio-upload-section');
+const playerSection = document.getElementById('player-section');
+const practicePanelGrid = document.getElementById('practice-panel-grid');
+const uploadSongName = document.getElementById('upload-song-name');
+const btnSelectAudioFile = document.getElementById('btn-select-audio-file');
+const audioFileInput = document.getElementById('audio-file-input');
+const btnChangeAudio = document.getElementById('btn-change-audio');
+const audioDropzone = document.getElementById('audio-dropzone');
+
 
 
 // ----------------------------------------------------
@@ -358,6 +364,11 @@ function updatePlaybackSpeed() {
 function renderTrackList() {
   trackListContainer.innerHTML = '';
   
+  if (trackLibrary.length === 0) {
+    trackListContainer.innerHTML = `<p class="empty-state">Nenhuma música cadastrada.</p>`;
+    return;
+  }
+  
   trackLibrary.forEach((track, index) => {
     const item = document.createElement('div');
     item.className = `track-item ${index === currentTrackIndex ? 'active' : ''}`;
@@ -367,19 +378,61 @@ function renderTrackList() {
         <i data-lucide="${index === currentTrackIndex ? 'play' : 'music'}"></i>
       </div>
       <div class="track-details">
-        <span class="track-item-name" title="${track.name}">${track.name}</span>        
+        <span class="track-item-name" title="${track.name}">${track.name}</span>
+        <span class="track-item-artist">${track.artist || "Artista Desconhecido"}</span>
       </div>
+      <button class="track-item-delete" title="Excluir música">
+        <i data-lucide="trash-2"></i>
+      </button>
     `;
     
     // Clicking the item loads the song
-    item.addEventListener('click', () => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.track-item-delete')) return;
       selectTrack(index);
     });
+    
+    const btnDelete = item.querySelector('.track-item-delete');
+    if (btnDelete) {
+      btnDelete.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteTrack(index);
+      });
+    }
     
     trackListContainer.appendChild(item);
   });
   
   lucide.createIcons();
+}
+
+function deleteTrack(index) {
+  const track = trackLibrary[index];
+  if (!track) return;
+  
+  if (confirm(`Deseja realmente excluir a música "${track.name}" e todos os seus presets?`)) {
+    // Revoke Blob URL if exists
+    if (sessionAudioUrls[track.id]) {
+      URL.revokeObjectURL(sessionAudioUrls[track.id]);
+      delete sessionAudioUrls[track.id];
+    }
+    
+    trackLibrary.splice(index, 1);
+    saveLibraryToStorage();
+    showToast("Música excluída com sucesso.", "info");
+    
+    if (trackLibrary.length === 0) {
+      currentTrackIndex = -1;
+      localStorage.removeItem('guitar_practice_last_track_index');
+      showNoTrackSelectedState();
+    } else {
+      if (currentTrackIndex >= trackLibrary.length) {
+        currentTrackIndex = trackLibrary.length - 1;
+      }
+      selectTrack(currentTrackIndex);
+    }
+    renderTrackList();
+  }
 }
 
 function selectTrack(index) {
@@ -392,11 +445,85 @@ function selectTrack(index) {
   
   currentTrackIndex = index;
   localStorage.setItem('guitar_practice_last_track_index', index);
+  
   const track = trackLibrary[currentTrackIndex];
+  if (!track) {
+    showNoTrackSelectedState();
+    return;
+  }
   
   currentTrackTitle.textContent = track.name;
-  initWavesurfer(track.url);
   renderTrackList();
+  
+  const audioUrl = sessionAudioUrls[track.id];
+  if (audioUrl) {
+    // Audio loaded, show player
+    audioUploadSection.classList.add('hidden');
+    playerSection.classList.remove('hidden');
+    practicePanelGrid.classList.remove('hidden');
+    btnChangeAudio.classList.remove('hidden');
+    
+    playingBadge.innerHTML = '<span class="pulse-dot"></span> Pronto para tocar';
+    
+    initWavesurfer(audioUrl);
+  } else {
+    // No audio loaded, show dropzone
+    audioUploadSection.classList.remove('hidden');
+    playerSection.classList.add('hidden');
+    practicePanelGrid.classList.add('hidden');
+    btnChangeAudio.classList.add('hidden');
+    
+    uploadSongName.textContent = track.name;
+    playingBadge.innerHTML = "Aguardando áudio...";
+    
+    if (ws) {
+      ws.destroy();
+      ws = null;
+    }
+  }
+}
+
+function showNoTrackSelectedState() {
+  currentTrackTitle.textContent = "Selecione ou cadastre uma música";
+  playingBadge.innerHTML = "Sem música";
+  audioUploadSection.classList.add('hidden');
+  playerSection.classList.add('hidden');
+  practicePanelGrid.classList.add('hidden');
+  btnChangeAudio.classList.add('hidden');
+  
+  if (ws) {
+    ws.destroy();
+    ws = null;
+  }
+}
+
+function handleAudioFileSelected(file) {
+  if (!file) return;
+  
+  const track = trackLibrary[currentTrackIndex];
+  if (!track) {
+    showToast("Por favor, selecione uma música primeiro.", "error");
+    return;
+  }
+  
+  // Revoke previous session URL if exists
+  if (sessionAudioUrls[track.id]) {
+    URL.revokeObjectURL(sessionAudioUrls[track.id]);
+  }
+  
+  const blobUrl = URL.createObjectURL(file);
+  sessionAudioUrls[track.id] = blobUrl;
+  
+  audioUploadSection.classList.add('hidden');
+  playerSection.classList.remove('hidden');
+  practicePanelGrid.classList.remove('hidden');
+  btnChangeAudio.classList.remove('hidden');
+  
+  playingBadge.innerHTML = '<span class="pulse-dot"></span> Carregando áudio...';
+  
+  showToast(`Áudio "${file.name}" carregado para a música "${track.name}"!`, "success");
+  
+  initWavesurfer(blobUrl);
 }
 
 
@@ -650,17 +777,78 @@ function showToast(message, type = 'info') {
 // ----------------------------------------------------
 // Training Presets Management
 // ----------------------------------------------------
+// ----------------------------------------------------
+// Database (LocalStorage library management)
+// ----------------------------------------------------
+function saveLibraryToStorage() {
+  localStorage.setItem('guitar_practice_songs_library', JSON.stringify(trackLibrary));
+}
+
+function loadLibraryFromStorage() {
+  const raw = localStorage.getItem('guitar_practice_songs_library');
+  if (raw) {
+    try {
+      trackLibrary = JSON.parse(raw);
+    } catch (e) {
+      console.error("Erro ao carregar biblioteca:", e);
+      trackLibrary = [];
+    }
+  } else {
+    migrateLegacyPresets();
+  }
+}
+
+function migrateLegacyPresets() {
+  trackLibrary = [];
+  const legacyIds = [
+    { id: "eye-of-the-tiger", name: "Survivor - Eye of the tiger - Guitar Backing track", artist: "Survivor" },
+    { id: "smoke-on-the-water", name: "Smoke On The Water - Em (100% com Click)", artist: "Deep Purple" },
+    { id: "eye-of-the-tiger-alt", name: "Eye of the tiger", artist: "Survivor" }
+  ];
+  
+  let hasLegacyData = false;
+  legacyIds.forEach(info => {
+    const rawPresets = localStorage.getItem(`guitar_practice_presets_${info.id}`);
+    const rawRoutine = localStorage.getItem(`guitar_practice_routine_${info.id}`);
+    
+    if (rawPresets || rawRoutine) {
+      hasLegacyData = true;
+      let routineSettings = null;
+      if (rawRoutine) {
+        try {
+          routineSettings = JSON.parse(rawRoutine);
+        } catch (e) {}
+      }
+      const song = {
+        id: info.id,
+        name: info.name,
+        artist: info.artist,
+        presets: rawPresets ? JSON.parse(rawPresets) : [],
+        routineSettings: routineSettings
+      };
+      trackLibrary.push(song);
+    }
+  });
+  
+  if (hasLegacyData) {
+    saveLibraryToStorage();
+  }
+}
+
+// ----------------------------------------------------
+// Training Presets Management
+// ----------------------------------------------------
 function getPresets() {
   const track = trackLibrary[currentTrackIndex];
   if (!track) return [];
-  const raw = localStorage.getItem(`guitar_practice_presets_${track.id}`);
-  return raw ? JSON.parse(raw) : [];
+  return track.presets || [];
 }
 
 function savePresets(presets) {
   const track = trackLibrary[currentTrackIndex];
   if (!track) return;
-  localStorage.setItem(`guitar_practice_presets_${track.id}`, JSON.stringify(presets));
+  track.presets = presets;
+  saveLibraryToStorage();
 }
 
 function formatPracticeDuration(seconds) {
@@ -842,7 +1030,7 @@ function saveRoutineSettings() {
   if (routineSaveTimeout) clearTimeout(routineSaveTimeout);
   
   routineSaveTimeout = setTimeout(() => {
-    const settings = {
+    track.routineSettings = {
       loopStart: loopStart,
       loopEnd: loopEnd,
       speed: speedSlider.value,
@@ -852,7 +1040,7 @@ function saveRoutineSettings() {
       pause: pauseSlider.value
     };
     
-    localStorage.setItem(`guitar_practice_routine_${track.id}`, JSON.stringify(settings));
+    saveLibraryToStorage();
     if (routineSaveStatus) {
       routineSaveStatus.textContent = "Salvo automaticamente";
     }
@@ -863,11 +1051,9 @@ function loadRoutineSettings() {
   const track = trackLibrary[currentTrackIndex];
   if (!track) return;
   
-  const raw = localStorage.getItem(`guitar_practice_routine_${track.id}`);
-  if (raw) {
+  const settings = track.routineSettings;
+  if (settings) {
     try {
-      const settings = JSON.parse(raw);
-      
       loopStart = parseFloat(settings.loopStart) || 0;
       const duration = ws.getDuration();
       loopEnd = Math.min(parseFloat(settings.loopEnd) || duration, duration);
@@ -917,7 +1103,6 @@ function loadRoutineSettings() {
     speedSlider.value = 100;
     speedDisplay.textContent = "100%";
     updatePlaybackSpeed();
-    // presetButtons active states are automatically updated in updatePlaybackSpeed()
     
     loopsInput.value = 10;
     loopInfiniteChk.checked = false;
@@ -1040,6 +1225,22 @@ btnSetEnd.addEventListener('click', () => {
     showToast("O fim do loop não pode ser anterior ao início.", "error");
   }
 });
+
+if (btnSetEndToSongEnd) {
+  btnSetEndToSongEnd.addEventListener('click', () => {
+    if (!ws) return;
+    const duration = ws.getDuration();
+    if (duration > loopStart) {
+      loopEnd = duration;
+      createLoopRegion(loopStart, loopEnd);
+      updateLoopInputs();
+      showToast(`Fim do loop definido para o final da música (${formatTime(loopEnd)})`, "info");
+      saveRoutineSettings();
+    } else {
+      showToast("Duração da música é inválida ou menor que o início do loop.", "error");
+    }
+  });
+}
 
 // Speed Inputs
 speedSlider.addEventListener('input', () => {
@@ -1206,7 +1407,9 @@ window.addEventListener('keydown', (e) => {
   
   if (e.code === 'Space') {
     e.preventDefault(); // Prevent page scroll
-    btnPlayPause.click();
+    if (ws) {
+      btnPlayPause.click();
+    }
   }
   
   if (e.code === 'Escape') {
@@ -1216,25 +1419,198 @@ window.addEventListener('keydown', (e) => {
   }
   
   if (e.code === 'KeyS') {
-    btnSetStart.click();
+    if (ws) btnSetStart.click();
   }
   
   if (e.code === 'KeyE') {
-    btnSetEnd.click();
+    if (ws) btnSetEnd.click();
   }
 });
+
+// ----------------------------------------------------
+// Event Listeners for Adding Songs, Uploading Audio, and Backup
+// ----------------------------------------------------
+
+// Sidebar Add Song Actions
+if (btnShowAddSong) {
+  btnShowAddSong.addEventListener('click', () => {
+    formAddSong.classList.remove('hidden');
+    btnShowAddSong.classList.add('hidden');
+    addSongTitle.focus();
+  });
+}
+
+if (btnCancelAddSong) {
+  btnCancelAddSong.addEventListener('click', () => {
+    formAddSong.classList.add('hidden');
+    btnShowAddSong.classList.remove('hidden');
+    formAddSong.reset();
+  });
+}
+
+if (formAddSong) {
+  formAddSong.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = addSongTitle.value.trim();
+    if (!title) return;
+    
+    const newSong = {
+      id: "song_" + Date.now(),
+      name: title,
+      presets: []
+    };
+    
+    trackLibrary.push(newSong);
+    saveLibraryToStorage();
+    
+    formAddSong.classList.add('hidden');
+    btnShowAddSong.classList.remove('hidden');
+    formAddSong.reset();
+    
+    renderTrackList();
+    
+    // Select the newly added song
+    selectTrack(trackLibrary.length - 1);
+    showToast(`Música "${title}" cadastrada!`, "success");
+  });
+}
+
+// Local Audio File Picker
+if (btnSelectAudioFile) {
+  btnSelectAudioFile.addEventListener('click', () => {
+    audioFileInput.click();
+  });
+}
+
+if (audioFileInput) {
+  audioFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    handleAudioFileSelected(file);
+  });
+}
+
+if (btnChangeAudio) {
+  btnChangeAudio.addEventListener('click', () => {
+    audioFileInput.click();
+  });
+}
+
+// Drag and drop for audio dropzone
+if (audioDropzone) {
+  audioDropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    audioUploadSection.classList.add('dragover');
+  });
+  
+  audioDropzone.addEventListener('dragleave', () => {
+    audioUploadSection.classList.remove('dragover');
+  });
+  
+  audioDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    audioUploadSection.classList.remove('dragover');
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('audio/')) {
+      handleAudioFileSelected(file);
+    } else {
+      showToast("Por favor, envie apenas arquivos de áudio.", "error");
+    }
+  });
+}
+
+// Export backup
+if (btnExportBackup) {
+  btnExportBackup.addEventListener('click', () => {
+    if (trackLibrary.length === 0) {
+      showToast("Não há músicas cadastradas para exportar.", "error");
+      return;
+    }
+    
+    try {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trackLibrary, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `guitar_practice_backup_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("Backup exportado com sucesso!", "success");
+    } catch (e) {
+      console.error("Erro ao exportar backup:", e);
+      showToast("Erro ao exportar backup.", "error");
+    }
+  });
+}
+
+// Trigger import input click
+if (btnTriggerImport) {
+  btnTriggerImport.addEventListener('click', () => {
+    importBackupFile.click();
+  });
+}
+
+// Handle backup file import
+if (importBackupFile) {
+  importBackupFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        
+        // Simple validation
+        if (Array.isArray(importedData)) {
+          const isValid = importedData.every(song => song.id && song.name && Array.isArray(song.presets));
+          if (isValid) {
+            if (confirm("Isso irá substituir suas músicas e presets atuais pelo backup. Deseja continuar?")) {
+              trackLibrary = importedData;
+              saveLibraryToStorage();
+              renderTrackList();
+              
+              if (trackLibrary.length > 0) {
+                selectTrack(0);
+              } else {
+                currentTrackIndex = -1;
+                showNoTrackSelectedState();
+              }
+              showToast("Backup importado com sucesso!", "success");
+            }
+          } else {
+            showToast("Estrutura do arquivo de backup inválida.", "error");
+          }
+        } else {
+          showToast("O arquivo de backup deve conter uma lista de músicas.", "error");
+        }
+      } catch (err) {
+        console.error("Erro ao importar backup:", err);
+        showToast("Erro ao ler o arquivo de backup. Certifique-se de que é um JSON válido.", "error");
+      }
+      importBackupFile.value = '';
+    };
+    reader.readAsText(file);
+  });
+}
 
 // ----------------------------------------------------
 // Startup / Initialization
 // ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  // Load playlist and select first track
+  // Load playlist from localStorage
+  loadLibraryFromStorage();
   renderTrackList();
   
   const lastIndex = localStorage.getItem('guitar_practice_last_track_index');
   const initialIndex = lastIndex !== null ? parseInt(lastIndex, 10) : 0;
   const safeIndex = (initialIndex >= 0 && initialIndex < trackLibrary.length) ? initialIndex : 0;
-  selectTrack(safeIndex);
+  
+  if (trackLibrary.length > 0) {
+    selectTrack(safeIndex);
+  } else {
+    showNoTrackSelectedState();
+  }
   
   // Trigger Lucide Icons replace
   lucide.createIcons();

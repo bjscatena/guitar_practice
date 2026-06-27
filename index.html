@@ -57,12 +57,39 @@
         <!-- Track Selection Section -->
         <div class="section-group">
           <h2 class="section-title"><i data-lucide="folder-open"></i> Minhas Músicas</h2>
+          
+          <!-- Add Song Form -->
+          <div class="add-song-container">
+            <button id="btn-show-add-song" class="btn btn-sm btn-outline btn-full-width">
+              <i data-lucide="plus"></i> Cadastrar Música
+            </button>
+            <form id="form-add-song" class="form-add-song hidden animate-fade-in">
+              <input type="text" id="add-song-title" placeholder="Nome da Música" class="form-input text-input" required autocomplete="off">
+              <div class="form-actions">
+                <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
+                <button type="button" id="btn-cancel-add-song" class="btn btn-sm btn-ghost">Cancelar</button>
+              </div>
+            </form>
+          </div>
 
           <div class="track-list" id="track-list">
-            <!-- Backing tracks will be injected here -->
+            <!-- Songs will be injected here -->
           </div>
         </div>
 
+        <!-- Backup Section -->
+        <div class="section-group backup-section-group">
+          <h2 class="section-title"><i data-lucide="settings"></i> Backup & Dados</h2>
+          <div class="backup-actions">
+            <button id="btn-export-backup" class="btn btn-sm btn-outline btn-full-width" title="Exportar todas as músicas e presets para arquivo JSON">
+              <i data-lucide="download"></i> Exportar Backup
+            </button>
+            <button id="btn-trigger-import" class="btn btn-sm btn-outline btn-full-width" title="Importar músicas e presets de arquivo JSON">
+              <i data-lucide="upload"></i> Importar Backup
+            </button>
+            <input type="file" id="import-backup-file" accept=".json" class="hidden">
+          </div>
+        </div>
       </nav>
     </aside>
 
@@ -73,12 +100,16 @@
         <div class="current-track-info">
           <div class="track-playing-badge" id="playing-badge">
             <span class="pulse-dot"></span>
-            Carregando backing track...
+            Aguardando áudio...
           </div>
           <h2 id="current-track-title" class="track-title">Carregando...</h2>
         </div>
         
         <div class="header-actions">
+          <button id="btn-change-audio" class="btn btn-icon-text btn-outline hidden" title="Substituir arquivo de áudio para esta música">
+            <i data-lucide="refresh-cw"></i>
+            <span>Alterar Áudio</span>
+          </button>
           <button id="help-btn" class="btn btn-icon-text btn-outline">
             <i data-lucide="help-circle"></i>
             <span>Instruções</span>
@@ -86,8 +117,23 @@
         </div>
       </header>
 
+      <!-- Audio File Selector Card (Shown when song has no audio in session) -->
+      <section class="card audio-upload-card" id="audio-upload-section">
+        <div class="audio-upload-content">
+          <div class="audio-upload-dropzone" id="audio-dropzone">
+            <i data-lucide="upload-cloud" class="upload-icon-lg"></i>
+            <h3>Carregar arquivo de áudio</h3>
+            <p>Selecione ou arraste um arquivo de áudio (MP3, WAV, etc.) para praticar a música <strong id="upload-song-name">...</strong></p>
+            <button class="btn btn-primary btn-lg" id="btn-select-audio-file">
+              <i data-lucide="file-audio"></i> Escolher Arquivo
+            </button>
+            <input type="file" id="audio-file-input" accept="audio/*" class="hidden">
+          </div>
+        </div>
+      </section>
+
       <!-- Waveform Section -->
-      <section class="card waveform-card">
+      <section class="card waveform-card hidden" id="player-section">
         <div class="waveform-header">
           <div class="time-display">
             <span id="time-current" class="mono">00:00</span>
@@ -137,7 +183,7 @@
       </section>
 
       <!-- Panel Grid: Routine Settings & Notes -->
-      <div class="panel-grid">
+      <div class="panel-grid hidden" id="practice-panel-grid">
         <!-- Practice Routine Panel -->
         <section class="card panel-card highlight-border">
           <div class="card-header">
@@ -164,6 +210,9 @@
                   <input type="text" id="loop-end-input" class="mono text-center" placeholder="00:00" value="00:00">
                   <button id="btn-set-end" class="btn btn-action" title="Usar tempo atual">
                     <i data-lucide="pin"></i>
+                  </button>
+                  <button id="btn-set-end-to-song-end" class="btn btn-action" title="Usar fim da música">
+                    <i data-lucide="chevrons-right"></i>
                   </button>
                 </div>
               </div>
