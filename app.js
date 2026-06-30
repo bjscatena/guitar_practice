@@ -379,7 +379,6 @@ function renderTrackList() {
       </div>
       <div class="track-details">
         <span class="track-item-name" title="${track.name}">${track.name}</span>
-        <span class="track-item-artist">${track.artist || "Artista Desconhecido"}</span>
       </div>
       <button class="track-item-delete" title="Excluir música">
         <i data-lucide="trash-2"></i>
