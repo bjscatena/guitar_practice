@@ -4,7 +4,7 @@ Aplicativo web para praticar riffs, solos e músicas no violão/guitarra. Isole 
 
 ## 🚀 Funcionalidades
 
-- 🎸 Backing tracks disponíveis na pasta `tracks`
+- 🎸 Cadastro de músicas personalizadas com suporte a áudio local (MP3, WAV, etc.)
 - ⏱️ Loop preciso com visualização de waveform
 - ⚡ Velocidade de 50% a 150%
 - 🔄 Repetições configuráveis ou loop infinito
